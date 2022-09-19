@@ -111,3 +111,15 @@ Your web application should support the following actions:
     1. Setting (or changing) the duedate
 1. Mark a task as complete
 1. (Optional) Delete a task
+
+## Todo Amendment I - Filtering
+To adhere to best REST API practices, the query params will no longer be in CLI format. Here are the new possible query 
+directives:
+- context 
+- project
+- priority
+- tag: to be supported in v2. directive unclear for whether the filter is by tag key or tag value (see AdditionalTags
+field in todotxt.Task for clarification)
+- after: models <datestring CLI directive
+- before: models >datestring CLI directive
+- completed
