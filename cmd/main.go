@@ -3,12 +3,20 @@ package cmd
 import (
 	"github.com/chrishaynes21/apichallenge/internal/handlers"
 	"github.com/julienschmidt/httprouter"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net/http"
+	"os"
 )
 
-func main() {
+// init will set up the logging
+func init() {
+	log.SetFormatter(&log.JSONFormatter{})
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.DebugLevel)
+}
 
+// main is the top level router for the different routes
+func main() {
 	router := httprouter.New()
 	router.GET("/todos", handlers.ListTodos)
 	router.GET("/todo/:id", handlers.GetTodo)

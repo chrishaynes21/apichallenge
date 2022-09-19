@@ -3,6 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/1set/todotxt"
+	"github.com/chrishaynes21/apichallenge/pkg/trace"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"strconv"
@@ -11,91 +14,182 @@ import (
 // ListTodos outputs the list of todos.  This function should accept
 // query params that allow parameterization of the search
 func ListTodos(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	todos, e := todotxt.LoadFromPath("todo.txt")
-	if e != nil {
-		//handle error
+	// setup traced logging and context
+	ctx := trace.Ctx()
+	fields := log.Fields{"traceID": ctx.Value(trace.TIDKey), "func": "ListTodos"}
+	log.WithFields(fields).Debug("begin")
+
+	// attempt to load todos file
+	todos, err := todotxt.LoadFromPath("todo.txt")
+	if err != nil {
+		log.WithFields(fields).WithError(err).Error("failed to load todo.txt")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	// TODO: param parsing filters
 
-	// TODO: handle error
-	json.NewEncoder(w).Encode(todos)
+	// set content type and attempt to encode response
+	w.Header().Set("Content-Type", "application/json")
+	if err = json.NewEncoder(w).Encode(todos); err != nil {
+		log.WithFields(fields).WithError(err).Error("failed to encode response")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// write success code
+	w.WriteHeader(http.StatusOK)
+	log.WithFields(fields).Debug("success")
 }
 
 // GetTodo gets a specific todo
 func GetTodo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	// setup traced logging and context
+	ctx := trace.Ctx()
+	fields := log.Fields{"traceID": ctx.Value(trace.TIDKey), "func": "GetTodo"}
+	log.WithFields(fields).Debug("begin")
 
-	tdid := ps.ByName("id")
-	todo_id, e := strconv.Atoi(tdid)
-	if e != nil {
-		//If the parameter is not parseable as an integer, there will be an error here.  You probably don't need to worry about this.
+	// parse id param and attempt string to int conversion
+	rawTID := ps.ByName("id")
+	todoID, err := strconv.Atoi(rawTID)
+	if err != nil {
+		log.WithFields(fields).WithField("todoID", rawTID).WithError(err).Error("param conversion failure")
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
-	todos, e := todotxt.LoadFromPath("todo.txt")
-	if e != nil {
-		//If it cannot find the file, there will be an error here. You probably don't need to worry about this.
+	// attempt to load todo file
+	todos, err := todotxt.LoadFromPath("todo.txt")
+	if err != nil {
+		log.WithFields(fields).WithError(err).Error("failed to load todo.txt")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
-	task, e := todos.GetTask(todo_id)
-	if e != nil {
-		//If the task is not found, there will be an error here
-		//fmt.Println(e.Error())
-		//handle error
+	// attempt to get requested task by ID
+	task, err := todos.GetTask(todoID)
+	if err != nil { // TODO: investigate potential GetTask failure reasons
+		log.WithFields(fields).WithField("todoID", todoID).WithError(err).Error("task not found")
+		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 
+	// set content type and attempt to encode to response
 	w.Header().Set("Content-Type", "application/json")
+	if err = json.NewEncoder(w).Encode(task); err != nil {
+		log.WithFields(fields).WithError(err).Error("failed to encode response")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// write success code
 	w.WriteHeader(http.StatusOK)
-
-	// TODO: handle error
-	json.NewEncoder(w).Encode(task)
-
+	log.WithFields(fields).Debug("success")
 }
 
 // UpdateTodo takes the body of the request and updates the todo in todo.txt
 func UpdateTodo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	// setup traced logging and context
+	ctx := trace.Ctx()
+	fields := log.Fields{"traceID": ctx.Value(trace.TIDKey), "func": "UpdateTodo"}
+	log.WithFields(fields).Debug("begin")
 
-	tdid := ps.ByName("id")
-	todo_id, e := strconv.Atoi(tdid)
-	if e != nil {
-		//If the parameter is not parseable as an integer, there will be an error here.  You probably don't need to worry about this.
+	// parse id param and attempt string to int conversion
+	// TODO: common helper
+	rawTID := ps.ByName("id")
+	todoID, err := strconv.Atoi(rawTID)
+	if err != nil {
+		log.WithFields(fields).WithField("todoID", rawTID).WithError(err).Error("param conversion error")
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
-	tasks, e := todotxt.LoadFromPath("todo.txt")
-	if e != nil {
-		//If it cannot find the file, there will be an error here. You probably don't need to worry about this.
+	// attempt to load todo file
+	// TODO: common helper
+	todos, err := todotxt.LoadFromPath("todo.txt")
+	if err != nil {
+		log.WithFields(fields).WithError(err).Error("failed to load todo.txt")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
-	task, e := tasks.GetTask(todo_id)
-	if e != nil {
-		//If the task is not found, there will be an error here
-		//fmt.Println(e.Error())
-		//handle error
+	// attempt to get requested task by ID
+	task, err := todos.GetTask(todoID)
+	if err != nil { // TODO: investigate potential GetTask failure reasons
+		log.WithFields(fields).WithField("todoID", todoID).WithError(err).Error("task not found")
+		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 
-	decoder := json.NewDecoder(r.Body)
-	e = decoder.Decode(&task)
+	// attempt to decode request body into task
+	if err = json.NewDecoder(r.Body).Decode(&task); err != nil {
+		log.WithFields(fields).WithError(err).Error("failed to decode request body into task")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
-	// TODO: handle error
-	todotxt.WriteToPath(&tasks, "todo.txt")
+	// attempt bulk write all todos to file
+	// TODO: investigate performance issues with bulk write
+	if err = todotxt.WriteToPath(&todos, "todo.txt"); err != nil {
+		log.WithFields(fields).WithError(err).Error("failed to write todos to file")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
+	// set content type and attempt to encode response
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(task)
+	if err = json.NewEncoder(w).Encode(task); err != nil {
+		log.WithFields(fields).WithError(err).Error("failed to encode response")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
+	// write success header
+	w.WriteHeader(http.StatusOK)
+	log.WithFields(fields).Debug("success")
 }
 
 // CreateTodo will create a new todo in todo.txt.
 // TODO: verify the newly generated ID is unique.
 func CreateTodo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	// setup traced logging and context
+	ctx := trace.Ctx()
+	fields := log.Fields{"traceID": ctx.Value(trace.TIDKey), "func": "CreateTodo"}
+	log.WithFields(fields).Debug("begin")
 
-	todos, _ := todotxt.LoadFromPath("todo.txt")
-	task, _ := todos.GetTask(2)
+	// attempt to load todo file
+	todos, err := todotxt.LoadFromPath("todo.txt")
+	if err != nil {
+		log.WithFields(fields).WithError(err).Error("failed to load todo.txt")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
+	// attempt to decode request body into new task
+	task := &todotxt.Task{}
+	if err = json.NewDecoder(r.Body).Decode(&task); err != nil {
+		log.WithFields(fields).WithError(err).Error("failed to decode request body into task")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// add new task to todos
+	todos.AddTask(task)
+
+	// attempt to bulk write todos to file
+	if err = todotxt.WriteToPath(&todos, "todo.txt"); err != nil {
+		log.WithFields(fields).WithError(err).Error("failed to write todos to file")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// set content type and attempt to encode response
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	if err = json.NewEncoder(w).Encode(task); err != nil {
+		log.WithFields(fields).WithError(err).Error("failed to encode task")
+	}
 
 	// TODO: handle error
-	json.NewEncoder(w).Encode(task)
-
+	w.WriteHeader(http.StatusOK)
+	log.WithFields(fields).WithField("todoID", task.ID).Debug("success")
 }
