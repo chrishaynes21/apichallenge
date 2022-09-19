@@ -1,14 +1,12 @@
-package main
+package cmd
 
 import (
-	_ "fmt"
 	"github.com/chrishaynes21/apichallenge/internal/handlers"
 	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
 )
 
-// Legacy Main: Still supported, but this main function has been moved to cmd/main.go
 func main() {
 
 	router := httprouter.New()
