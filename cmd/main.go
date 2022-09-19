@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"github.com/chrishaynes21/apichallenge/internal/handlers"
@@ -25,5 +25,6 @@ func main() {
 
 	router.NotFound = http.FileServer(http.Dir("./static"))
 
+	log.Info("starting server on port :8080")
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
