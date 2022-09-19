@@ -11,19 +11,22 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// Use this function to output the list of todos.  This function should accept
+// ListTodos outputs the list of todos.  This function should accept
 // query params that allow parameterization of the search
 func ListTodos(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	todos, e := todotxt.LoadFromPath("todo.txt")
 	if e != nil {
 		//handle error
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+
+	// TODO: handle error
 	json.NewEncoder(w).Encode(todos)
 }
 
-// Use this function to get a specific todo
+// GetTodo gets a specific todo
 func GetTodo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	tdid := ps.ByName("id")
@@ -46,10 +49,13 @@ func GetTodo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+
+	// TODO: handle error
 	json.NewEncoder(w).Encode(task)
 
 }
 
+// UpdateTodo takes the body of the request and updates the todo in todo.txt
 func UpdateTodo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	tdid := ps.ByName("id")
@@ -73,6 +79,7 @@ func UpdateTodo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	decoder := json.NewDecoder(r.Body)
 	e = decoder.Decode(&task)
 
+	// TODO: handle error
 	todotxt.WriteToPath(&tasks, "todo.txt")
 
 	w.Header().Set("Content-Type", "application/json")
@@ -81,6 +88,8 @@ func UpdateTodo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 }
 
+// CreateTodo will create a new todo in todo.txt.
+// TODO: verify the newly generated ID is unique.
 func CreateTodo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	todos, _ := todotxt.LoadFromPath("todo.txt")
@@ -88,6 +97,8 @@ func CreateTodo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+
+	// TODO: handle error
 	json.NewEncoder(w).Encode(task)
 
 }
