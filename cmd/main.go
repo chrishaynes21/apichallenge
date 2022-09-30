@@ -20,10 +20,11 @@ func init() {
 // main is the top level router for the different routes
 func main() {
 	router := httprouter.New()
+	router.POST("/todos", handlers.CreateTodo)
 	router.GET("/todos", handlers.ListTodos)
 	router.GET("/todos/:id", handlers.GetTodo)
 	router.PUT("/todos/:id", handlers.UpdateTodo)
-	router.POST("/todos", handlers.CreateTodo)
+	router.DELETE("/todos/:id", handlers.DeleteTodo)
 
 	router.NotFound = http.FileServer(http.Dir("./static"))
 

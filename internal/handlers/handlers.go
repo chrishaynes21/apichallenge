@@ -169,6 +169,9 @@ func CreateTodo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
+	// set created date to now
+	task.CreatedDate = time.Now()
+
 	// add new task to todos
 	todos.AddTask(task)
 
@@ -188,20 +191,60 @@ func CreateTodo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	log.WithFields(fields).WithField("todoID", task.ID).Debug("success")
 }
 
+// DeleteTodo will delete a todo from the task list
+func DeleteTodo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	// setup traced logging and context
+	ctx := trace.Ctx()
+	fields := log.Fields{"traceID": ctx.Value(trace.TIDKey), "func": "DeleteTodo"}
+	log.WithFields(fields).Debug("begin")
+
+	// parse id param and attempt string to int conversion
+	rawTID := ps.ByName("id")
+	todoID, err := strconv.Atoi(rawTID)
+	if err != nil {
+		log.WithFields(fields).WithField("todoID", rawTID).WithError(err).Error("param conversion error")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	// attempt to load todo file
+	todos, err := todotxt.LoadFromPath("todo.txt")
+	if err != nil {
+		log.WithFields(fields).WithError(err).Error("failed to load todo.txt")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// attempt to find the task
+	todo, err := todos.GetTask(todoID)
+	if err != nil {
+		log.WithFields(fields).WithField("id", todoID).WithError(err).Error("failed to get task")
+		w.WriteHeader(http.StatusNotFound)
+	}
+
+	// attempt to remove the task
+	if err := todos.RemoveTask(*todo); err != nil {
+		log.WithFields(fields).WithField("id", todo.ID).WithError(err).Error("failed to remove task")
+		w.WriteHeader(http.StatusNotFound)
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+	log.WithFields(fields).WithField("id", todoID).Debug("success")
+}
+
 func filterTodos(ctx context.Context, todos todotxt.TaskList, params httprouter.Params) todotxt.TaskList {
 	var preds []todotxt.Predicate
 	for _, param := range params {
 		switch param.Key {
+		case "after":
+			preds = append(preds, filterByAfter(ctx, param.Value))
+		case "before":
+			preds = append(preds, filterByBefore(ctx, param.Value))
 		case "context":
 			preds = append(preds, todotxt.FilterByContext(param.Value))
 		case "priority":
 			preds = append(preds, todotxt.FilterByPriority(param.Value))
 		case "project":
 			preds = append(preds, todotxt.FilterByProject(param.Value))
-		case "after":
-			preds = append(preds, filterByAfter(ctx, param.Value))
-		case "before":
-			preds = append(preds, filterByBefore(ctx, param.Value))
 		}
 	}
 
