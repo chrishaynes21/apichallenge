@@ -227,6 +227,13 @@ func DeleteTodo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		w.WriteHeader(http.StatusNotFound)
 	}
 
+	// attempt to bulk write todos to file
+	if err = todotxt.WriteToPath(&todos, "todo.txt"); err != nil {
+		log.WithFields(fields).WithError(err).Error("failed to write todos to file")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusNoContent)
 	log.WithFields(fields).WithField("id", todoID).Debug("success")
 }
