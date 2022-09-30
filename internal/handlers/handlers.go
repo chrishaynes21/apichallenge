@@ -39,8 +39,6 @@ func ListTodos(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		return
 	}
 
-	// write success code
-	w.WriteHeader(http.StatusOK)
 	log.WithFields(fields).Debug("success")
 }
 
@@ -84,8 +82,6 @@ func GetTodo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	// write success code
-	w.WriteHeader(http.StatusOK)
 	log.WithFields(fields).Debug("success")
 }
 
@@ -146,8 +142,6 @@ func UpdateTodo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	// write success header
-	w.WriteHeader(http.StatusOK)
 	log.WithFields(fields).Debug("success")
 }
 
@@ -191,8 +185,6 @@ func CreateTodo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.WithFields(fields).WithError(err).Error("failed to encode task")
 	}
 
-	// TODO: handle error
-	w.WriteHeader(http.StatusOK)
 	log.WithFields(fields).WithField("todoID", task.ID).Debug("success")
 }
 
