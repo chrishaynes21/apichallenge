@@ -13,55 +13,59 @@ In a \*nix environment, the tester would expect to run your program in the follo
 ```bash
 prompt> ./todo add {task}
 ```
+## API
+### Model
+Task
+```json
+{
+	"ID": 1,
+	"Original": "todo 1",
+	"Todo": "completed todo 1",
+	"Priority": "A",
+	"Projects": [
+		"A proj",
+		"B proj"
+	],
+	"Contexts": [
+		"test"
+	],
+	"AdditionalTags": {
+		"tag1": "meta1",
+		"tag2": "meta2"
+	},
+	"CreatedDate": "2020-01-02T03:00:00Z",
+	"DueDate": "2023-01-02T03:00:00Z",
+	"CompletedDate": "2022-09-19T00:00:00Z",
+	"Completed": true
+}
+```
+### Paths
+#### `GET /todos`
+Lists all tasks. Has optional filtering parameters:
+- Parameters
+  - `after`:  input in `YYYY-MM-DD` format (e.g. "2021-01-01") should filter out any tasks that have due dates after the specified time.
+  - `before`: input in `YYYY-MM-DD` format (e.g. "2021-01-01") should filter out any tasks that have due dates before the specified time.
+  - `context`: output should only include tasks with that context.  If more than one "context tag" param is included, the filter should accept any todo that has one or more of the given context tags and reject any todo lacking the specified context tags.
+  - `priority`: output should include only tasks that have the associated priority.  If more than one priority tag is included in the params, the output should include all and only tasks that have *any* of the specified priority tags.
+  - `project`: output should only include tasks associated with that project.  If more than one "project tag" param is included, the filter should accept any todo that has one or more of the given project tags and reject any todo lacking the specified project tags.
+  - `order`:  follows all orders defined by the `TaskSortByType` type in the codebase (defined [here](https://pkg.go.dev/github.com/1set/todotxt#TaskSortByType))
 
-## Command List
+#### `GET /todos/<id>`
+Gets the task with the `id`.
 
-Your CLI should support the following commands:
+#### `PUT /todos/<id>`
+Update the task at `id` with the payload.
 
-1. `ls` - lists all tasks.  It should accept the following optional filter parameters:
-    1. `@context` - any string that starts with '@' should be interpreted as a "context tag," and the output should only include tasks with that context.  If more than one "context tag" param is included, the filter should accept any todo that has one or more of the given context tagss and reject any todo lacking all of the specified context tags
-    1. `+project` - any string that starts with '+' should be interpreted as a "project tag," and the output should only include tasks associated with that project.  If more than one "project tag" param is included, the filter should accept any todo that has one or more of the given project tags and reject any todo lacking all of the specified project tags
-    1. `(A)` - any string that is surrounded with `()` should be interpreted as a "priority" tag, and the output should include only tasks that have the associated priority.  If more than one priority tag is included in the params, the output should include all and only tasks that have *any* of the specified priority tags.  
-    1. `tag:` - any string that ends in a `:` should filter out any tasks that do not contain the associated tag.  If more than one such string is included, the application should filter out any tasks that do not include *any* of the specified tags
-    1. `>datestring`, `<datestring` - any string that starts with a `>` and is in `YYYY-MM-DD` format (e.g. "2021-01-01") should filter out any tasks that have due dates before the specified time.  Any string that starts with a `<` and is in `YYYY-MM-DD` format (e.g. "2021-01-01") should filter out any tasks that have due dates after the specified time.  If multiple such strings are included, it should respect the instructions of all of them (this may result in an empty list returned).
-    1. `|order` Any param that starts with `|` should be interpreted as an ordering parameters.  You can define your own list of strings for the "order" param, but you should support all the orders defined by the `TaskSortByType` type in the codebase (defined [here](https://pkg.go.dev/github.com/1set/todotxt#TaskSortByType))
-    1. `completed`  If this string is included, output completed tasks at the end of the list, subject to all the same filters, separated from the other tasks by an empty line
-1. `completed` - lists all completed tasks.  It should accept the same filters as `ls`, with the difference that the `<datestring` and `>datestring` filters should apply to the "completed" date rather than the due date.
-1. `add {task_string}` - adds a task to the file  
-1. `rm {task_id}` - removes a task from the file
-1. `do {task_id}` - mark the task specified by the id as completed
-1. `tags` - list all *unique* tags in the file.  It is not enough to simply list the tags, you have to ensure that there are no duplicates in the output.
-1. `projects` - list all *unique* projects in the file.  It is not enough to simply list the projects, you must ensure that there are no duplicates in the output.
-1. `due` - output a list of *unique* due dates followed by the number of tasks due on that date.  At the end of the list, include the number of tasks that are missing a due date.  Example output:
-    ```
-    2021-03-01 16
-    2021-03-02 5
-    2021-03-15 1
-    26
-    ```
-1. `extend {task_id} {quantity} {unit}` - Should extend the due date of the task identified by `{task_id}` by `{quantity}` number of `{unit}` time.  For example, `extend 5 1 day` would add one day to the due date on task 5.  `extend 6 -2 week` would shorten the due date of task 6 by two weeks.  So, if task 5 was due on `2021-03-03`, it would be due on `2021-03-04` as a result of the command.  If task 6 were due on `2021-03-03`, it would be due on `2021-02-17` as a result of the command.  If a task has no duedate when this call is made on it, it should behave as though the task were due today.  You should support the following units:
-    1. `day`
-    1. `week`
-    1. `month`
-    1. `year`
+#### `DELETE /todos/<id>`
+Remove the task at `id` from the task list.
+
+#### `POST /todos`
+Create a task with the payload.
 
 ## Other Requirements
 
 1. By default - i.e. in the absence of any other filters - output should be sorted primarily by priority, secondarily by due date, and tertiarily by created date.  Completed tasks should *always* be listed separately (when they are listed at all)
 
-## Bonus Requirements
-
-1. Add support for `>=` and `<=` as due date filters
-1. Add a "help" or "man" page instruction that prints out instructions on how to use the app.
-1. For the `due` command, include the number of tasks due on the date that are *not* completed in parentheses.  E.g.:
-    ```
-    2021-03-01 16 (8)
-    2021-03-02 5 (1) 
-    2021-03-15 1 (0)
-    26 (22)
-    ```
-1. Include a "TOTAL: {number}" tag at the end of the output of the `ls` command that shows the number of tasks in the output
-1. Add terminal colors to the output.  So, for example, all tasks of priority `(A)` might be yellow, the tasks of priority `(B)` might be red, etc.
 
 #  Fullstack API Developer Code Challenge
 
@@ -72,9 +76,9 @@ As an alternative, you can implement a web interface (instead of a commandline i
 The basic framework has been done for you.  The file `apichallenge.go` implements a basic server that can handle the web connection for you (you don't need to implement authentication or user management for this task).  To run this setup you will need to:
 
 1. Install `todotxt`: `go get github.com/1set/todotxt`
-1. Install `httprouter`: `go get github.com/julienschmidt/httprouter`
-1. Compile: `go build`
-1. Run it! : `./apichallenge`
+2. Install `httprouter`: `go get github.com/julienschmidt/httprouter`
+3. Compile: `go build ./cmd`
+4. Run it! : `./cmd.exe` (or other OS runnable)
 
 Now if you navigate to `http://localhost:8080/mainpage.html` you should see the main page.
 
@@ -98,28 +102,16 @@ Your web application should support the following actions:
 
 1. List all the tasks.  This part of the project should accept query parameters to filter the list of todos.  **The filtering must be done on the backend.**  The point of this part of the task is to demonstrate that you can use an existing Go codebase.  So, you **must** implement the list filters on the backend in Go (and not on the frontend in Javascript)!!!  The following query parameters should be accepted:
     1. `projects` - Any projects included here should filter the output to include *only* those tasks that are associated with one or more of the given projects.
-    1. `priority` - Any priorities included here should filter the output to include *only* those tasks that have one of the priorities in question
-    1. `context` - Any contexts included here should filter the output to include *only* those tasks that have one of the contexts in question
-    1. `order` - If the order param is set, the tasks should come back in the order specified.  You should support all the orders given in the [TaskSortByType](https://pkg.go.dev/github.com/1set/todotxt#TaskSortByType)) struct.
-    1. `duebefore` - this should accept a string representing a datetime and *only* return tasks that (a) have a duedate (b) which is before the date specified
-    1. `dueafter` - this should accept a string representing a datetime and *only* return tasks that (a) have a dueate (b) which is after the date specified
-1. Accept input from a user and add a new todo to the list
-1. Update any aspect of a task.  This includes:
+    2. `priority` - Any priorities included here should filter the output to include *only* those tasks that have one of the priorities in question
+    3. `context` - Any contexts included here should filter the output to include *only* those tasks that have one of the contexts in question
+    4. `order` - If the order param is set, the tasks should come back in the order specified.  You should support all the orders given in the [TaskSortByType](https://pkg.go.dev/github.com/1set/todotxt#TaskSortByType)) struct.
+    5. `duebefore` - this should accept a string representing a datetime and *only* return tasks that (a) have a duedate (b) which is before the date specified
+    6. `dueafter` - this should accept a string representing a datetime and *only* return tasks that (a) have a dueate (b) which is after the date specified
+2. Accept input from a user and add a new todo to the list
+3. Update any aspect of a task.  This includes:
     1. Adding (or removing) a project
-    1. Adding (or removing) a context
-    1. Setting (or changing) the priority
-    1. Setting (or changing) the duedate
-1. Mark a task as complete
-1. (Optional) Delete a task
-
-## Todo Amendment I - Filtering
-To adhere to best REST API practices, the query params will no longer be in CLI format. Here are the new possible query 
-directives:
-- context 
-- project
-- priority
-- tag: to be supported in v2. directive unclear for whether the filter is by tag key or tag value (see AdditionalTags
-field in todotxt.Task for clarification)
-- after: models <datestring CLI directive
-- before: models >datestring CLI directive
-- completed
+    2. Adding (or removing) a context
+    3. Setting (or changing) the priority
+    4. Setting (or changing) the duedate
+4. Mark a task as complete
+5. (Optional) Delete a task
