@@ -11,12 +11,16 @@ import (
 
 var testTodos = []todotxt.Task{
 	{
-		ID:            1,
-		Original:      "completed todo 1",
-		Todo:          "todo 1",
-		Priority:      "A",
-		Projects:      []string{"A proj", "B proj"},
-		Contexts:      []string{"test"},
+		ID:       1,
+		Original: "completed todo 1",
+		Todo:     "todo 1",
+		Priority: "A",
+		Projects: []string{"A proj", "B proj"},
+		Contexts: []string{"test"},
+		AdditionalTags: map[string]string{
+			"tag1": "meta1",
+			"tag2": "meta2",
+		},
 		CreatedDate:   time.Date(2020, 1, 2, 3, 0, 0, 0, time.UTC),
 		DueDate:       time.Date(2023, 1, 2, 3, 0, 0, 0, time.UTC),
 		CompletedDate: time.Date(2022, 9, 19, 0, 0, 0, 0, time.UTC),

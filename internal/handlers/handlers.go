@@ -233,7 +233,7 @@ func filterByAfter(ctx context.Context, dateStr string) todotxt.Predicate {
 			return false
 		}
 
-		return date.Before(task.DueDate)
+		return task.DueDate.After(date)
 	}
 }
 
@@ -246,6 +246,6 @@ func filterByBefore(ctx context.Context, dateStr string) todotxt.Predicate {
 			return false
 		}
 
-		return date.After(task.DueDate)
+		return task.DueDate.Before(date)
 	}
 }

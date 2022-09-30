@@ -19,9 +19,9 @@ func init() {
 func main() {
 	router := httprouter.New()
 	router.GET("/todos", handlers.ListTodos)
-	router.GET("/todo/:id", handlers.GetTodo)
-	router.PUT("/todo/:id", handlers.UpdateTodo)
-	router.POST("/todo", handlers.CreateTodo)
+	router.GET("/todos/:id", handlers.GetTodo)
+	router.PUT("/todos/:id", handlers.UpdateTodo)
+	router.POST("/todos", handlers.CreateTodo)
 
 	router.NotFound = http.FileServer(http.Dir("./static"))
 
