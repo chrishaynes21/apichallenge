@@ -10,7 +10,9 @@ import (
 
 // init will set up the logging
 func init() {
-	log.SetFormatter(&log.JSONFormatter{})
+	log.SetFormatter(&log.TextFormatter{
+		ForceColors: true,
+	})
 	log.SetOutput(os.Stdout)
 	log.SetLevel(log.DebugLevel)
 }
