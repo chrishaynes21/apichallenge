@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/1set/todotxt"
 	"github.com/chrishaynes21/apichallenge/pkg/trace"
 	log "github.com/sirupsen/logrus"
@@ -28,11 +29,24 @@ func ListTodos(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
+	// filter todos
 	filtered := filterTodos(ctx, todos, r.URL.Query())
+
+	// sort filtered todos
+	sorted, err := sortTodos(ctx, filtered, r.URL.Query())
+	if err != nil {
+		if errors.Is(err, UnknownSortError) {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	// set content type and attempt to encode response
 	w.Header().Set("Content-Type", "application/json")
-	if err = json.NewEncoder(w).Encode(filtered); err != nil {
+	if err = json.NewEncoder(w).Encode(sorted); err != nil {
 		log.WithFields(fields).WithError(err).Error("failed to encode response")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
