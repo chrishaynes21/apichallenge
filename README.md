@@ -86,6 +86,9 @@ will need to:
 3. Compile: `go build ./cmd`
 4. Run it! : `./cmd.exe` (or other OS runnable)
 
+Once running, the Postman Collection in /integration can be used for some basic integration tests. Simply import
+PostmanCollection into your Postman and enjoy playing with the API!
+
 Now if you navigate to `http://localhost:8080/mainpage.html` you should see the main page.
 
 ## Integration
