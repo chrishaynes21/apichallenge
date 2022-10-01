@@ -75,11 +75,7 @@ Create a task with the payload.
    due date, and tertiarily by created date. Completed tasks should *always* be listed separately (when they are listed
    at all)
 
-## Setup - Running apichallenge.go
-
-The basic framework has been done for you. The file `apichallenge.go` implements a basic server that can handle the web
-connection for you (you don't need to implement authentication or user management for this task). To run this setup you
-will need to:
+## Setup - Running apichallenge
 
 1. Install `todotxt`: `go get github.com/1set/todotxt`
 2. Install `httprouter`: `go get github.com/julienschmidt/httprouter`
