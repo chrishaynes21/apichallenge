@@ -35,7 +35,7 @@ func ListTodos(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// sort filtered todos
 	sorted, err := sortTodos(ctx, filtered, r.URL.Query())
 	if err != nil {
-		if errors.Is(err, UnknownSortError) {
+		if errors.Is(err, ErrUnknownSort) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}

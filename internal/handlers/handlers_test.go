@@ -11,7 +11,7 @@ var testTodos = []todotxt.Task{
 		Original: "completed todo 1",
 		Todo:     "todo 1",
 		Priority: "A",
-		Projects: []string{"A proj", "B proj"},
+		Projects: []string{"ProjectA", "ProjectB"},
 		Contexts: []string{"test"},
 		AdditionalTags: map[string]string{
 			"tag1": "meta1",
@@ -27,7 +27,7 @@ var testTodos = []todotxt.Task{
 		Original:      "unfinished todo 2",
 		Todo:          "todo 2",
 		Priority:      "B",
-		Projects:      []string{"B proj"},
+		Projects:      []string{"ProjectB"},
 		Contexts:      []string{"test"},
 		CreatedDate:   time.Date(2020, 2, 2, 3, 0, 0, 0, time.UTC),
 		DueDate:       time.Date(2022, 1, 2, 3, 0, 0, 0, time.UTC),
@@ -39,7 +39,7 @@ var testTodos = []todotxt.Task{
 		Original:      "previously finished todo 3",
 		Todo:          "todo 3",
 		Priority:      "C",
-		Projects:      []string{"C proj"},
+		Projects:      []string{"ProjectC"},
 		Contexts:      []string{"another test"},
 		CreatedDate:   time.Date(2020, 3, 2, 3, 0, 0, 0, time.UTC),
 		DueDate:       time.Date(2022, 3, 3, 3, 0, 0, 0, time.UTC),
@@ -47,3 +47,5 @@ var testTodos = []todotxt.Task{
 		Completed:     true,
 	},
 }
+
+// TODO: implement handler tests
